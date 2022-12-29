@@ -83,6 +83,86 @@ class Cafe(db.Model):
         city = self.city
         return f'{city.name}, {city.state}'
 
+class User(db.Model):
+    """User information."""
+
+    __tablename__ = 'users'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    username = db.Column(
+                db.Text,
+                unique=True,
+                nullable=False,
+    )
+
+    amin = db.Column(
+        db.Boolean
+    )
+
+    email = db.Column(
+            db.Text,
+            nullable=True
+    )
+
+    first_name = db.Column(
+                 db.String(30),
+                 nullable=False
+    )
+
+    last_name = db.Column(
+                 db.String(40),
+                 nullable=False
+    )
+
+    description = db.Column(
+                  db.Text,
+                  nullable=True
+    )
+
+    image_url = db.Column(
+                db.Text,
+                nullable=False,
+                default="/static/images/default-pic.jpg",
+    )
+
+    hashed_password = db.Column(
+                      db.Text,
+                      nullable=False
+    )
+
+    def get_full_name(first_name, last_name):
+        '''Return a string of "FIRSTNAME LASTNAME'''
+
+        return f'{first_name} {last_name}'
+
+
+    @classmethod
+    def register(cls, username, pwd):
+        """Register user and hash password"""
+
+        hashed_password = bcrypt.generate_password_hash(pwd).decode('utf8')
+
+        # return instance of user w/username and hashed pwd
+        return cls(username=username, hashed_password=hashed_password)
+
+    @classmethod
+    def authenticate(cls, username, pwd):
+        '''Validate that user exists and password is correct.
+           Return user if valid, else, return False.
+        '''
+
+        u = cls.query.filter_by(username=username).one_or_none()
+
+        if u and bcrypt.check_password_hash(u.password, pwd):
+            #return user instance
+            return u
+        else:
+            return False
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.
