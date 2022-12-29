@@ -1,6 +1,6 @@
 """Flask App for Flask Cafe."""
 
-from flask import Flask, render_template, redirect, flash
+from flask import Flask, render_template, redirect, flash, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 import os
 from forms import AddCafeForm
@@ -27,28 +27,28 @@ CURR_USER_KEY = "curr_user"
 NOT_LOGGED_IN_MSG = "You are not logged in."
 
 
-# @app.before_request
-# def add_user_to_g():
-#     """If we're logged in, add curr user to Flask global."""
+@app.before_request
+def add_user_to_g():
+    """If we're logged in, add curr user to Flask global."""
 
-#     if CURR_USER_KEY in session:
-#         g.user = User.query.get(session[CURR_USER_KEY])
+    if CURR_USER_KEY in session:
+        g.user = User.query.get(session[CURR_USER_KEY])
 
-#     else:
-#         g.user = None
-
-
-# def do_login(user):
-#     """Log in user."""
-
-#     session[CURR_USER_KEY] = user.id
+    else:
+        g.user = None
 
 
-# def do_logout():
-#     """Logout user."""
+def do_login(user):
+    """Log in user."""
 
-#     if CURR_USER_KEY in session:
-#         del session[CURR_USER_KEY]
+    session[CURR_USER_KEY] = user.id
+
+
+def do_logout():
+    """Logout user."""
+
+    if CURR_USER_KEY in session:
+        del session[CURR_USER_KEY]
 
 
 #######################################

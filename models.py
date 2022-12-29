@@ -99,28 +99,30 @@ class User(db.Model):
                 nullable=False,
     )
 
-    amin = db.Column(
-        db.Boolean
+    admin = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
     )
 
     email = db.Column(
             db.Text,
-            nullable=True
+            nullable=True,
     )
 
     first_name = db.Column(
                  db.String(30),
-                 nullable=False
+                 nullable=False,
     )
 
     last_name = db.Column(
                  db.String(40),
-                 nullable=False
+                 nullable=False,
     )
 
     description = db.Column(
                   db.Text,
-                  nullable=True
+                  nullable=True,
     )
 
     image_url = db.Column(
@@ -131,23 +133,39 @@ class User(db.Model):
 
     hashed_password = db.Column(
                       db.Text,
-                      nullable=False
+                      nullable=False,
     )
 
-    def get_full_name(first_name, last_name):
+    def get_full_name(self):
         '''Return a string of "FIRSTNAME LASTNAME'''
 
-        return f'{first_name} {last_name}'
+        return f'{self.first_name} {self.last_name}'
 
 
     @classmethod
-    def register(cls, username, pwd):
+    def register(cls,
+                 username,
+                 email,
+                 first_name,
+                 last_name,
+                 description,
+                 password,
+                 image_url=None,
+                 admin=None):
         """Register user and hash password"""
 
-        hashed_password = bcrypt.generate_password_hash(pwd).decode('utf8')
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf8')
 
         # return instance of user w/username and hashed pwd
-        return cls(username=username, hashed_password=hashed_password)
+        return cls(
+            username=username,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            description=description,
+            image_url=image_url,
+            hashed_password=hashed_password,
+            admin=admin)
 
     @classmethod
     def authenticate(cls, username, pwd):
