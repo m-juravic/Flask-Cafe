@@ -16,18 +16,15 @@ class City(db.Model):
 
     code = db.Column(
         db.Text,
-        primary_key=True,
-    )
+        primary_key=True,)
 
     name = db.Column(
         db.Text,
-        nullable=False,
-    )
+        nullable=False,)
 
     state = db.Column(
         db.String(2),
-        nullable=False,
-    )
+        nullable=False,)
 
 
 class Cafe(db.Model):
@@ -37,40 +34,33 @@ class Cafe(db.Model):
 
     id = db.Column(
         db.Integer,
-        primary_key=True,
-    )
+        primary_key=True,)
 
     name = db.Column(
         db.Text,
-        nullable=False,
-    )
+        nullable=False,)
 
     description = db.Column(
         db.Text,
-        nullable=False,
-    )
+        nullable=False,)
 
     url = db.Column(
         db.Text,
-        nullable=False,
-    )
+        nullable=False,)
 
     address = db.Column(
         db.Text,
-        nullable=False,
-    )
+        nullable=False,)
 
     city_code = db.Column(
         db.Text,
         db.ForeignKey('cities.code'),
-        nullable=False,
-    )
+        nullable=False,)
 
     image_url = db.Column(
         db.Text,
         nullable=False,
-        default="/static/images/default-cafe.jpg",
-    )
+        default="/static/images/default-cafe.jpg",)
 
     city = db.relationship("City", backref='cafes')
 
@@ -83,6 +73,10 @@ class Cafe(db.Model):
         city = self.city
         return f'{city.name}, {city.state}'
 
+    # liking_users = db.relationship('User',
+    #                         secondary='cafe_likes',
+    #                         backref='liked_cafes')
+
 class User(db.Model):
     """User information."""
 
@@ -90,51 +84,42 @@ class User(db.Model):
 
     id = db.Column(
         db.Integer,
-        primary_key=True,
-    )
+        primary_key=True,)
 
     username = db.Column(
                 db.Text,
                 unique=True,
-                nullable=False,
-    )
+                nullable=False,)
 
     admin = db.Column(
         db.Boolean,
         nullable=False,
-        default=False,
-    )
+        default=False,)
 
     email = db.Column(
             db.Text,
-            nullable=True,
-    )
+            nullable=True,)
 
     first_name = db.Column(
                  db.String(30),
-                 nullable=False,
-    )
+                 nullable=False,)
 
     last_name = db.Column(
                  db.String(40),
-                 nullable=False,
-    )
+                 nullable=False,)
 
     description = db.Column(
                   db.Text,
-                  nullable=True,
-    )
+                  nullable=True,)
 
     image_url = db.Column(
                 db.Text,
                 nullable=False,
-                default="/static/images/default-pic.png",
-    )
+                default="/static/images/default-pic.png",)
 
     hashed_password = db.Column(
                       db.Text,
-                      nullable=False,
-    )
+                      nullable=False,)
 
     def get_full_name(self):
         '''Return a string of "FIRSTNAME LASTNAME'''
@@ -181,6 +166,28 @@ class User(db.Model):
         else:
             return False
 
+# class CafeLike(db.Model):
+#     """Like information for user and cafe likes."""
+
+#     __tablename__ = 'cafe_likes'
+
+#     id = db.Column(
+#         db.Integer,
+#         primary_key=True,)
+
+#     user_id = db.Column(
+#         db.Integer,
+#         db.ForeignKey("user.id"),
+#         primary_key=True,)
+
+#     cafe_id = db.Column(
+#         db.Integer,
+#         db.ForeignKey("cafe.id"),
+#         primary_key=True,)
+
+
+
+
 
 def connect_db(app):
     """Connect this database to provided Flask app.
@@ -191,3 +198,5 @@ def connect_db(app):
     app.app_context().push()
     db.app = app
     db.init_app(app)
+
+

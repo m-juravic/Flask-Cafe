@@ -493,28 +493,48 @@ class ProfileViewsTestCase(TestCase):
         db.session.commit()
 
     def test_anon_profile(self):
-        self.fail("FIXME: write this test")
+            with app.test_client() as client:
+                resp = client.get("/profile", follow_redirects=True)
+
+                self.assertIn(b'For testing login page -->', resp.data)
+                self.assertEqual(session.get(CURR_USER_KEY), None)
 
     def test_logged_in_profile(self):
             with app.test_client() as client:
+                client.post(
+                    '/login',
+                    data={"username": "test", "password": "secret"},
+                    follow_redirects=True
+                )
+
                 resp = client.get("/profile")
 
-            self.assertIn(b'<p><b>Email:</b>', resp.data)
-            self.assertEqual(session.get(CURR_USER_KEY), self.user_id)
+                self.assertIn(b'<p><b>Email:</b>', resp.data)
+                self.assertEqual(session.get(CURR_USER_KEY), self.user_id)
 
     def test_anon_profile_edit(self):
-        self.fail("FIXME: write this test")
+            with app.test_client() as client:
+                resp = client.get("/profile/edit", follow_redirects=True)
+
+                self.assertIn(b'For testing login page -->', resp.data)
+                self.assertEqual(session.get(CURR_USER_KEY), None)
 
     def test_logged_in_profile_edit(self):
-        with app.test_client() as client:
-            resp = client.get("/profile/edit", follow_redirects=True)
-            self.assertIn(b'>Edit Profile</h1>', resp.data)
+            with app.test_client() as client:
+                client.post(
+                    '/login',
+                    data={"username": "test", "password": "secret"},
+                    follow_redirects=True
+                )
 
-            resp = client.post(
-                "/profile/edit",
-                data=TEST_USER_DATA_EDIT,
-                follow_redirects=True)
-            self.assertIn(b'Profile edited.', resp.data)
+                resp = client.get("/profile/edit", follow_redirects=True)
+                self.assertIn(b'>Edit Profile</h1>', resp.data)
+
+                resp = client.post(
+                    "/profile/edit",
+                    data=TEST_USER_DATA_EDIT,
+                    follow_redirects=True)
+                self.assertIn(b'Profile edited.', resp.data)
 
 
 #######################################

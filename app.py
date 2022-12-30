@@ -251,6 +251,9 @@ def logout():
 def show_profile():
     '''Show user profile'''
 
+    if not g.user:
+        return redirect('/login')
+
     return render_template("profile/detail.html")
 
 
@@ -260,7 +263,11 @@ def edit_profile():
        to profile page with flashed message -- Profile edited.
     '''
 
+    if not g.user:
+        return redirect('/login')
+
     user = User.query.get_or_404(g.user.id)
+
     form = ProfileEditForm(obj=user)
 
     if form.validate_on_submit():
