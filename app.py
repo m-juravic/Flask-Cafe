@@ -3,7 +3,7 @@
 from flask import Flask, render_template, redirect, flash, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 import os
-from forms import AddCafeForm
+from forms import AddCafeForm, SignupForm, LoginForm, ProfileEditForm
 
 from models import db, connect_db, Cafe, City, User
 
@@ -142,8 +142,144 @@ def edit_cafe(cafe_id):
         city_code = form.city_code.data
         image_url = form.image_url.data
 
+        cafe.name = name
+        cafe.description = description
+        cafe.url = url
+        cafe.address = address
+        cafe.city_code = city_code
+        cafe.image_url = image_url
+
+        db.session.commit()
+
         flash(f'{cafe.name} edited')
         return redirect(f'/cafes/{cafe.id}')
 
     else:
         return render_template('cafe/edit-form.html', form=form, cafe=cafe)
+
+#######################################################
+#USERS
+
+@app.route('/signup', methods=["GET", "POST"])
+def signup():
+    '''Show signup form and handle's form submission/registration of new user
+       If valid, logs new user in and redirects to cafe list with flashed
+       message -- You are signed up and logged in
+    '''
+
+    form = SignupForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+        description = form.description.data
+        email = form.email.data
+        password = form.password.data
+        image_url = form.image_url.data or None
+
+        dup_user = User.query.filter_by(username=username).first()
+
+        if dup_user:
+            flash('Username already taken')
+            return render_template('auth/signup-form.html', form=form)
+
+        if image_url == None:
+            image_url = "/static/images/default-pic.png"
+
+        user = User.register(
+            username,
+            email,
+            first_name,
+            last_name,
+            description,
+            password,
+            image_url)
+
+        db.session.add(user)
+        db.session.commit()
+
+        do_login(user)
+
+        flash('You are signed up and logged in.')
+        return redirect('/cafes')
+
+    else:
+        return render_template('auth/signup-form.html', form=form)
+
+
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    '''Show login form and processes login. If valid, logs in user and redirects
+       to cafe list with flashed message -- Hello username!
+    '''
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        user = User.authenticate(username, password)
+
+        if user:
+            do_login(user)
+            flash(f'Hello, {username}')
+            return redirect('/cafes')
+        else:
+            flash('Invalid credentials')
+
+    return render_template('auth/login-form.html', form=form)
+
+
+@app.post('/logout')
+def logout():
+    '''Process logout. Redirects to homepage with flashed message-- You have
+       successfully logged out
+    '''
+    if g.user:
+        do_logout()
+        flash('successfully logged out')
+
+    return redirect('/')
+
+
+#############################################
+#Profile Routes
+
+@app.get('/profile')
+def show_profile():
+    '''Show user profile'''
+
+    return render_template("profile/detail.html")
+
+
+@app.route('/profile/edit', methods=["GET", "POST"])
+def edit_profile():
+    '''Show profile edit form and process profile edit. If successful, redirect
+       to profile page with flashed message -- Profile edited.
+    '''
+
+    user = User.query.get_or_404(g.user.id)
+    form = ProfileEditForm(obj=user)
+
+    if form.validate_on_submit():
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+        description = form.description.data
+        email = form.email.data
+        image_url = form.image_url.data
+
+        user.first_name = first_name
+        user.last_name = last_name
+        user.description = description
+        user.email = email
+        user.image_url = image_url
+
+        db.session.commit()
+
+        flash('Profile edited.')
+        return redirect('/profile')
+
+    else:
+        return render_template('profile/edit-form.html', form=form)

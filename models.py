@@ -128,7 +128,7 @@ class User(db.Model):
     image_url = db.Column(
                 db.Text,
                 nullable=False,
-                default="/static/images/default-pic.jpg",
+                default="/static/images/default-pic.png",
     )
 
     hashed_password = db.Column(
@@ -168,14 +168,14 @@ class User(db.Model):
             admin=admin)
 
     @classmethod
-    def authenticate(cls, username, pwd):
+    def authenticate(cls, username, password):
         '''Validate that user exists and password is correct.
            Return user if valid, else, return False.
         '''
 
         u = cls.query.filter_by(username=username).one_or_none()
 
-        if u and bcrypt.check_password_hash(u.password, pwd):
+        if u and bcrypt.check_password_hash(u.hashed_password, password):
             #return user instance
             return u
         else:
