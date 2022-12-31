@@ -570,6 +570,7 @@ class LikeViewsTestCase(TestCase):
 
         self.u1_id = u1.id
         self.u2_id = u2.id
+        self.cafe_id = cafe.id
 
     def tearDown(self):
         """After each test, remove all users."""
@@ -587,9 +588,11 @@ class LikeViewsTestCase(TestCase):
                     data={"username": "test", "password": "secret"},
                     follow_redirects=True
                 )
-                resp = client.get("/profile", follow_redirects=True)
+                resp = client.get("/profile")
 
                 self.assertIn(b'<h4>Liked Cafes:</h4>', resp.data)
+                self.assertIn(b'Test Cafe', resp.data)
+                self.assertNotIn(b'<p>You have no liked cafes', resp.data)
                 self.assertEqual(session.get(CURR_USER_KEY), self.u1_id)
 
     def test_profile_without_likes(self):
@@ -600,7 +603,33 @@ class LikeViewsTestCase(TestCase):
                 follow_redirects=True
             )
 
-            resp = client.get("/profile", follow_redirects=True)
+            resp = client.get("/profile")
 
             self.assertIn(b'<p>You have no liked cafes', resp.data)
             self.assertEqual(session.get(CURR_USER_KEY), self.u2_id)
+
+    def test_does_like(self):
+        with app.test_client() as client:
+            client.post(
+                '/login',
+                data={"username": "test", "password": "secret"}
+            )
+
+            resp = client.get(f'/api/likes?cafe_id={self.cafe_id}')
+            data = resp.json
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual({'likes': True}, data)
+
+    def test_add_like(self):
+        with app.test_client() as client:
+            client.post(
+                '/login',
+                data={"username": "new-username", "password": "secret"}
+            )
+
+            resp = client.post('/api/like', json={'cafe_id': self.cafe_id})
+            data = resp.json
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual({'liked': self.cafe_id}, data)

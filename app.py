@@ -1,6 +1,6 @@
 """Flask App for Flask Cafe."""
 
-from flask import Flask, render_template, redirect, flash, session, g
+from flask import Flask, request, render_template, redirect, flash, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 import os
 from forms import AddCafeForm, SignupForm, LoginForm, ProfileEditForm
@@ -290,3 +290,68 @@ def edit_profile():
 
     else:
         return render_template('profile/edit-form.html', form=form)
+
+
+
+##############################################
+#Likes
+
+@app.get('/api/likes')
+def does_like():
+    '''Given a cafe id in the URL query string, figure out if the current user
+       likes that cafe and return JSON:
+       {'likes': true|false}.
+
+       If not logged in, returns JSON {"error": "Not logged in"}
+    '''
+
+    if not g.user:
+        return jsonify(error='Not logged in')
+
+    cafe_id = int(request.args['cafe_id'])
+    liked_cafe_ids = [c.id for c in g.user.liked_cafes]
+
+    if cafe_id in liked_cafe_ids:
+        return jsonify(likes=True)
+    else:
+        return jsonify(likes=False)
+
+@app.post('/api/like')
+def add_like():
+    '''given JSON {'cafe_id': 1}, make the current user like cafe #1.
+       Return JSON: {'liked': 1}
+
+       If not logged in, returns JSON {"error": "Not logged in"}
+    '''
+    if not g.user:
+        return jsonify(error='Not logged in')
+
+    data = request.json
+    cafe_id = int(data['cafe_id'])
+    cafe = Cafe.query.get_or_404(cafe_id)
+
+    g.user.liked_cafes.append(cafe)
+    db.session.commit()
+
+    return jsonify(liked=cafe_id)
+
+@app.post('/api/unlike')
+def remove_like():
+    '''given JSON {'cafe_id': 1}, make current user unlike cafe #1.
+       Return JSON {'unliked': 1}
+
+       If not logged in, returns JSON {"error": "Not logged in"}
+    '''
+
+    if not g.user:
+        return jsonify(error='Not logged in')
+
+    data = request.json
+    cafe_id = int(data['cafe_id'])
+    cafe = Cafe.query.get_or_404(cafe_id)
+
+    g.user.liked_cafes.remove(cafe)
+    db.session.commit()
+
+    return jsonify(unliked=cafe_id)
+
