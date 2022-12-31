@@ -64,6 +64,9 @@ class Cafe(db.Model):
 
     city = db.relationship("City", backref='cafes')
 
+    # Cafe -> [User, User]
+    # liking_users (relationship created in User with backref)
+
     def __repr__(self):
         return f'<Cafe id={self.id} name="{self.name}">'
 
@@ -73,9 +76,8 @@ class Cafe(db.Model):
         city = self.city
         return f'{city.name}, {city.state}'
 
-    # liking_users = db.relationship('User',
-    #                         secondary='cafe_likes',
-    #                         backref='liked_cafes')
+
+
 
 class User(db.Model):
     """User information."""
@@ -126,6 +128,10 @@ class User(db.Model):
 
         return f'{self.first_name} {self.last_name}'
 
+    # User -> [Cafe, Cafe]
+    liked_cafes = db.relationship('Cafe',
+                            secondary='likes',
+                            backref='liking_users')
 
     @classmethod
     def register(cls,
@@ -166,26 +172,22 @@ class User(db.Model):
         else:
             return False
 
-# class CafeLike(db.Model):
-#     """Like information for user and cafe likes."""
+class Like(db.Model):
+    """Like information for user and cafe likes."""
 
-#     __tablename__ = 'cafe_likes'
+    __tablename__ = 'likes'
 
-#     id = db.Column(
-#         db.Integer,
-#         primary_key=True,)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        primary_key=True,)
 
-#     user_id = db.Column(
-#         db.Integer,
-#         db.ForeignKey("user.id"),
-#         primary_key=True,)
-
-#     cafe_id = db.Column(
-#         db.Integer,
-#         db.ForeignKey("cafe.id"),
-#         primary_key=True,)
-
-
+    cafe_id = db.Column(
+        db.Integer,
+        db.ForeignKey("cafes.id"),
+        nullable=False,
+        primary_key=True,)
 
 
 

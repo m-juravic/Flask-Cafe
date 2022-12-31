@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from flask import session
 from app import app, CURR_USER_KEY
-from models import db, Cafe, City, connect_db, User # ,  Like
+from models import db, Cafe, City, connect_db, User, Like
 
 # Use test database and don't clutter tests with SQL
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql:///flaskcafe_test"
@@ -542,6 +542,65 @@ class ProfileViewsTestCase(TestCase):
 
 
 class LikeViewsTestCase(TestCase):
-    """Tests for views on cafes."""
+    """Tests for cafe likes on user profile page."""
 
-    # FIXME: add setup/teardown/inidividual tests
+    def setUp(self):
+        """Before each test, add sample users."""
+
+        Like.query.delete()
+        User.query.delete()
+        Cafe.query.delete()
+
+        sf = City(**CITY_DATA)
+        db.session.add(sf)
+
+        cafe = Cafe(**CAFE_DATA)
+        db.session.add(cafe)
+
+        u1 = User.register(**TEST_USER_DATA)
+        db.session.add(u1)
+        db.session.commit()
+
+        u2 = User.register(**TEST_USER_DATA_NEW)
+        db.session.add(u2)
+        db.session.commit()
+
+        u1.liked_cafes.append(cafe)
+        db.session.commit()
+
+        self.u1_id = u1.id
+        self.u2_id = u2.id
+
+    def tearDown(self):
+        """After each test, remove all users."""
+
+        Like.query.delete()
+        User.query.delete()
+        Cafe.query.delete()
+        City.query.delete()
+        db.session.commit()
+
+    def test_profile_with_likes(self):
+            with app.test_client() as client:
+                client.post(
+                    '/login',
+                    data={"username": "test", "password": "secret"},
+                    follow_redirects=True
+                )
+                resp = client.get("/profile", follow_redirects=True)
+
+                self.assertIn(b'<h4>Liked Cafes:</h4>', resp.data)
+                self.assertEqual(session.get(CURR_USER_KEY), self.u1_id)
+
+    def test_profile_without_likes(self):
+        with app.test_client() as client:
+            client.post(
+                '/login',
+                data={"username": "new-username", "password": "secret"},
+                follow_redirects=True
+            )
+
+            resp = client.get("/profile", follow_redirects=True)
+
+            self.assertIn(b'<p>You have no liked cafes', resp.data)
+            self.assertEqual(session.get(CURR_USER_KEY), self.u2_id)
